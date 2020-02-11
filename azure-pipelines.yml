@@ -19,8 +19,14 @@
   #      - azure-pipelines-ci.yml
   #      - azure-pipelines-ci-cd.yml
 trigger:
-- '*'
-# - master
+  branches:
+    include:
+    - '*'     # build all branches
+    # - master
+  paths:
+    exclude:
+    - docs/*  # exclude the docs folder
+
 
 variables:
   buildConfiguration: 'Release'
@@ -28,6 +34,7 @@ variables:
 stages:
 - stage: 'Build'
   displayName: 'Build the web application'
+  # Could Be Done With Template
   jobs: 
   - job: 'Build' 
     displayName: 'Build job'
