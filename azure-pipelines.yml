@@ -43,20 +43,20 @@ stages:
         displayName: 'Restore project dependencies'
         inputs:
           command: 'restore'
-          projects: 'AzureDevOps2020.Web/*.csproj'
+          projects: 'AzureDevOps2020/AzureDevOps2020.Web/*.csproj'
       
       - task: DotNetCoreCLI@2
         displayName: 'Build the project - $(buildConfiguration)' 
         inputs:
           command: 'build'
           arguments: '--no-restore --configuration $(buildConfiguration)' 
-          projects: 'AzureDevOps2020.Web/*.csproj'
+          projects: 'AzureDevOps2020/AzureDevOps2020.Web/*.csproj'
       
       - task: DotNetCoreCLI@2
         displayName: 'Publish the project - $(buildConfiguration)' 
         inputs:
           command: 'publish'
-          projects: 'AzureDevOps2020.Web/*.csproj'
+          projects: 'AzureDevOps2020/AzureDevOps2020.Web/*.csproj'
           publishWebProjects: false
           arguments: '--no-build --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/$(buildConfiguration)' 
           zipAfterPublish: true
