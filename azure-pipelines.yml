@@ -1,34 +1,91 @@
-# ASP.NET Core (.NET Framework)
-# Build and test ASP.NET Core projects targeting the full .NET Framework.
-# Add steps that publish symbols, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-
+#TODO:
+  # pr:
+  #   branches:
+  #     include:
+  #       - dev
+  #   paths:
+  #     exclude:
+  #       - docs/*
+  #       - README.md
+  
+  # trigger:
+  #  branches:
+  #    include:
+  #      - master
+  #  paths:
+  #    exclude:
+  #      - docs/*
+  #      - README.md
+  #      - azure-pipelines-ci.yml
+  #      - azure-pipelines-ci-cd.yml
 trigger:
-- master
+- '*'
+# - master
 
 pool:
   vmImage: 'windows-latest'
 
-variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  variables:
+    buildConfiguration: 'Release'
+  
+  stages:
+  - stage: 'Build'
+    displayName: 'Build the web application'
+    jobs: 
+    - job: 'Build' 
+      displayName: 'Build job'
+      pool:
+        vmImage: 'windows-latest'
+      variables:
+        solution: '**/*.sln'
+        buildPlatform: 'Any CPU'
+      steps:
+        #Build
+        ##TODO: SonarCloud
+        steps:
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore project dependencies'
+            inputs:
+              command: 'restore'
+              projects: 'AzureDevOps2020.Web/*.csproj'
+          
+          - task: DotNetCoreCLI@2
+            displayName: 'Build the project - ${{ parameters.buildConfiguration }}' 
+            inputs:
+              command: 'build'
+              arguments: '--no-restore --configuration ${{ parameters.buildConfiguration }}' 
+              projects: 'AzureDevOps2020.Web/*.csproj'
+          
+          - task: DotNetCoreCLI@2
+            displayName: 'Publish the project - ${{ parameters.buildConfiguration }}' 
+            inputs:
+              command: 'publish'
+              projects: 'AzureDevOps2020.Web/*.csproj'
+              publishWebProjects: false
+              arguments: '--no-build --configuration ${{ parameters.buildConfiguration }} --output $(Build.ArtifactStagingDirectory)/${{ parameters.BuildConfiguration }}' 
+              zipAfterPublish: true
+          
+          - publish: '$(Build.ArtifactStagingDirectory)'
+            artifact: drop         
 
-steps:
-- task: NuGetToolInstaller@1
-
-- task: NuGetCommand@2
-  inputs:
-    restoreSolution: '$(solution)'
-
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-
-- task: VSTest@2
-  inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+        #Test
+        # - task: VSTest@2
+        #   inputs:
+        #     platform: '$(buildPlatform)'
+        #     configuration: '$(buildConfiguration)'
+        # - task: DotNetCoreCLI@2
+        #   displayName: 'Run unit tests - $(buildConfiguration)'
+        #   inputs:
+        #     command: 'test'
+        #     arguments: '--no-build --configuration $(buildConfiguration)'
+        #     publishTestResults: true
+        #     projects: '**/*.Tests.csproj'
+        # - task: WhiteSource Bolt@20
+        #   displayName: 'Run WhiteSource Bolt' 
+        #   condition: |
+        #     and
+        #       (
+        #         succeeded(),
+        #         eq(variables['Build.Reason'], 'PullRequest'),
+        #         eq(variables['System.PullRequest.TargetBranch'], 'master')
+        #       )
